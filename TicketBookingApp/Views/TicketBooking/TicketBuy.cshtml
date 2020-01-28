@@ -1,0 +1,133 @@
+﻿@model EventViewModel
+@{
+    ViewData["Title"] = "Buy";
+}
+
+<style type="text/css">
+</style>
+
+
+
+<div id="divTimer" class="timer-font"></div>
+@using (Html.BeginForm("TicketBuy", "TicketBooking", FormMethod.Post, new { @id = "frmTicketBuy", role = "form" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.EventId)
+    <div class="buyer-wrapper">
+        <div class="input-buyer-name">
+            <div class="form-inline">
+                @Html.LabelFor(m => m.BuyerName)
+                <div class="buyer-input">
+                    @Html.TextBoxFor(m => m.BuyerName)
+                    <div class="validations-buy">
+                        @Html.ValidationMessageFor(m => m.BuyerName, "", new { @class = "text-danger error-msg-text" })
+                        <div class="text-danger error-msg-text" id="errorMessage" style="display:none;font-size:25px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="but-btn-wrapper">
+            <input type="submit" name="name" value="Buy" class="default-btn" />
+        </div>
+    </div>
+}
+<div id="msg"></div>
+@section Scripts{
+    <script type="text/javascript">
+
+        function startTimerAtVideoIndex(apptDaysRemain, duration, display) {
+            var timer = duration, minutes, seconds;
+            startTimerAtVideoInterval = setInterval(function () {
+                hr = parseInt(timer / (60 * 60), 10);
+
+                minutes = parseInt(Math.floor(timer % (60 * 60)) / 60);
+
+                //minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                hr = hr < 10 ? "0" + hr : hr;
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                var strDaysRem = '';
+                if (apptDaysRemain > 0) {
+                    strDaysRem = apptDaysRemain + 'day ';
+                }
+
+                display.text(strDaysRem + hr + " hour " + minutes + " min " + seconds + " sec");
+
+                timer = timer - 1;
+
+                if (timer < 0) {
+                    if (apptDaysRemain > 0) {
+                        timer = (23 * 60 * 60) + (59 * 60) + 59;
+                        apptDaysRemain = apptDaysRemain - 1;
+                    } else {
+                        timer = duration;
+                        totaltimeinsec = 0;
+                        clearInterval(startTimerAtVideoInterval);
+                    $('#divTimer').hide();
+                        ShowErrorMessage("Time Expired!");
+                    }
+                }
+            }, 1000);
+        }
+
+        function EventSourceInit() {
+            var source = new EventSource('/api/SSE');
+
+            source.onopen = function(event) {
+              
+            };
+
+            source.onmessage = function (event) {
+                if (event.data == 'TICKET_BOOKED') {
+                    ShowErrorMessage('Too late!');
+                }
+            };
+
+            source.onerror = function (event) {
+                if ($('input[type="submit"]:visible').length > 0)
+                    EventSourceInit();
+            }
+        }
+
+        function ShowErrorMessage(message) {
+            $('input[type="submit"]').hide();
+            $("#errorMessage").html(message);
+            $("#errorMessage").show();
+            $('#divTimer').hide();
+            clearInterval(startTimerAtVideoInterval);
+        }
+
+        $(document).ready(function () {
+            if ("@ViewBag.Message" != "") {
+                ShowErrorMessage("@ViewBag.Message");
+            }
+        });
+
+        var startTimerAtVideoInterval;
+        var totalSeconds = @Model.TimeoutInSeconds;
+        var day = parseInt(totalSeconds / (24 * 3600));
+
+        @*totalSeconds = totalSeconds % (24 * 3600);
+        var hour = parseInt(totalSeconds / 3600);
+
+        totalSeconds %= 3600;
+        var minutes = parseInt(totalSeconds / 60);
+
+        totalSeconds %= 60;
+        var seconds = parseInt(@Model.TimeoutInSeconds);*@
+
+        if ('@Model.IsTickedAlreadyBought' == 'False')
+        {
+            EventSourceInit();
+            startTimerAtVideoIndex(day, totalSeconds, $('#divTimer'));
+        } else {
+            ShowErrorMessage('Too late!');
+        }
+
+       
+
+    </script>
+}

@@ -1,0 +1,38 @@
+﻿@model List<Event>
+@{
+    ViewData["Title"] = "Index";
+}
+
+ 
+
+<table class="buy-table">
+    <tr>
+        <td>
+            Available Events
+        </td>
+        <td>
+        </td>
+    </tr>
+
+    @if (Model != null)
+    {
+        foreach (var objEvent in Model)
+        {
+
+            <tr>
+                <td>
+                    @objEvent.Name
+                </td>
+                <td>
+                    <a class="navbar-brand" asp-area="" asp-controller="TicketBooking" asp-action="TicketBuy" asp-route-id="@objEvent.EventId">Buy</a>
+                </td>
+            </tr>
+        }
+    }
+</table>
+<script type="text/javascript">
+        if ("@ViewBag.Message" != "") {
+            alert("@ViewBag.Message");
+        }
+
+</script>
